@@ -298,7 +298,7 @@
   <header>
     <div class="title">OPULENT HARDWARE — MULTI FEED</div>
     <div class="tabs" id="tabs">
-      <!-- pinned tabs (default) -->
+      <!-- pinned tabs -->
       <button class="tab-btn active" data-tab="news">BBC NEWS</button>
       <button class="tab-btn" data-tab="market">YAHOO FINANCE</button>
       <button class="tab-btn" data-tab="youtube">YOUTUBE</button>
@@ -335,7 +335,7 @@
       { name: "TSLA", url: "https://feeds.finance.yahoo.com/rss/2.0/headline?s=TSLA&region=US&lang=en-US" }
     ];
 
-    // YouTube creators (your list)
+    // YouTube creators (your custom list)
     const YT_CHANNELS = [
       { name: "itsLenabee",           channel_id: "UCeCOatE7PJIIce5-ekbtbbw" },
       { name: "random callsign",      channel_id: "UC1hoWeqSuf03UgeABeR2U3g" },
@@ -351,7 +351,7 @@
       { name: "LRN2DIY",              channel_id: "UCPKAKrjoMz7POptCloy7AIQ" }
     ];
 
-    // podcasts / audio-ish feeds
+    // Podcasts / mixed audio-ish feeds
     const PODCAST_FEEDS = [
       { name: "NPR Planet Money",  url: "https://feeds.npr.org/510289/podcast.xml" },
       { name: "NPR The Indicator", url: "https://feeds.npr.org/510325/podcast.xml" },
@@ -360,11 +360,12 @@
       { name: "TED Talks Daily",   url: "https://feeds.feedburner.com/tedtalks_video" }
     ];
 
-    // NEW: article/news-style feeds
+    // NEW: more reliable article/news feeds
     const ARTICLE_FEEDS = [
-      { name: "Harvard Health Blog", url: "https://www.health.harvard.edu/blog/feed" },
-      { name: "Lonely Planet",       url: "https://www.lonelyplanet.com/blog.rss" },
-      { name: "Investopedia",        url: "https://www.investopedia.com/feedbuilder/feed/getfeed/?feedName=rss_articles" }
+      { name: "MedlinePlus Health News",  url: "https://newsroom.medlineplus.gov/?output=rss" },
+      { name: "Conde Nast Traveler",      url: "https://www.cntraveler.com/feed/rss" },
+      { name: "Travel + Leisure",         url: "https://www.travelandleisure.com/rss" },
+      { name: "Investing.com – News",     url: "https://www.investing.com/rss/news.rss" }
     ];
 
     /* ===== ELEMENTS ===== */
@@ -382,8 +383,9 @@
       (url) => `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(url)}`
     ];
 
+    /* ===== FETCH HELPERS ===== */
     function fetchWithTimeout(resource, options = {}) {
-      const { timeout = 4000 } = options;
+      const { timeout = 6000 } = options; // slightly longer for news sites
       return Promise.race([
         fetch(resource, options),
         new Promise((_, reject) => setTimeout(() => reject(new Error("timeout")), timeout))
@@ -394,13 +396,13 @@
       for (const build of proxyBuilders) {
         const target = build(url);
         try {
-          const resp = await fetchWithTimeout(target, { timeout: 4000, ...opt });
+          const resp = await fetchWithTimeout(target, { timeout: 6000, ...opt });
           if (!resp.ok) throw new Error("bad status");
           if (target.includes("api.rss2json.com")) {
             return { type: "json", data: await resp.json() };
           }
           return { type: "xml", data: await resp.text() };
-        } catch (e) { /* try next proxy */ }
+        } catch (e) { /* try next */ }
       }
       throw new Error("all fetch methods failed for " + url);
     }
@@ -508,6 +510,7 @@
       });
     }
 
+    // NEW: articles tab
     async function loadArticles() {
       feedEl.innerHTML = '<div class="empty">Loading articles…</div>';
       const all = [];
@@ -660,7 +663,6 @@
         else b.classList.remove('active');
       });
 
-      // load content
       if (tab === 'news') loadNews();
       if (tab === 'market') loadMarket();
       if (tab === 'youtube') loadYouTube();
@@ -697,7 +699,7 @@
       document.body.classList.toggle('header-hidden');
     });
 
-    // initial load
+    // initial
     loadNews();
   </script>
 </body>
