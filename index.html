@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Opulent Hardware — Multi Feed</title>
+  <style>
+    :root {
+      --bg: #000;
+      --panel: rgba(255,255,255,.015);
+      --muted: #9aa6b2;
+      --text: #f2f6ff;
+      --accent: #b6ff3b;
+      --border: rgba(255,255,255,.04);
+      --header-h: 134px;
+    }
+    * { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      background: radial-gradient(circle at top, #0f1215 0%, #000 60%);
+      color: var(--text);
+      font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+      min-height: 100vh;
+      color-scheme: dark;
+    }
+
+    header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 100;
+      background: rgba(0,0,0,.75);
+      backdrop-filter: blur(16px);
+      border-bottom: 1px solid rgba(255,255,255,.03);
+      padding: .75rem 1rem .6rem;
+      transition: transform .25s ease;
+    }
+    body.header-hidden header {
+      transform: translateY(calc(-1 * var(--header-h)));
+    }
+
+    .title {
+      font-size: 1.05rem;
+      font-weight: 700;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+    }
+
+    .tabs {
+      margin-top: .6rem;
+      display: flex;
+      gap: .5rem;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .tab-btn {
+      background: rgba(255,255,255,.03);
+      border: 1px solid transparent;
+      border-radius: 999px;
+      padding: .3rem .7rem;
+      font-size: .7rem;
+      text-transform: uppercase;
+      letter-spacing: .03em;
+      cursor: pointer;
+      color: var(--muted);
+      white-space: nowrap;
+    }
+    .tab-btn.active {
+      border-color: rgba(182,255,59,1);
+      color: var(--text);
+    }
+
+    /* More menu */
+    .tab-more {
+      position: relative;
+    }
+    .tab-more-btn {
+      background: rgba(255,255,255,.03);
+      border: 1px solid rgba(255,255,255,.01);
+      border-radius: 999px;
+      padding: .3rem .7rem;
+      font-size: .7rem;
+      text-transform: uppercase;
+      letter-spacing: .03em;
+      cursor: pointer;
+      color: var(--muted);
+      display: flex;
+      gap: .35rem;
+      align-items: center;
+    }
+    .tab-more.open .more-menu {
+      display: block;
+    }
+    .more-menu {
+      position: absolute;
+      top: 110%;
+      right: 0;
+      background: rgba(0,0,0,.9);
+      border: 1px solid rgba(255,255,255,.05);
+      border-radius: .5rem;
+      min-width: 160px;
+      display: none;
+      padding: .3rem 0;
+      backdrop-filter: blur(12px);
+    }
+    .more-menu button {
+      background: transparent;
+      border: 0;
+      width: 100%;
+      text-align: left;
+      padding: .45rem .65rem;
+      color: #f2f6ff;
+      font-size: .68rem;
+      cursor: pointer;
+      display: block;
+    }
+    .more-menu button:hover {
+      background: rgba(255,255,255,.03);
+    }
+
+    .searchbar {
+      margin-top: .6rem;
+      display: flex;
+      gap: .5rem;
+    }
+    .searchbar input {
+      flex: 1;
+      background: rgba(255,255,255,.03);
+      border: 1px solid rgba(255,255,255,.02);
+      border-radius: .65rem;
+      padding: .4rem .65rem;
+      color: inherit;
+    }
+
+    main {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: calc(var(--header-h) + 1rem) 1rem 7rem;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+      transition: padding-top .25s ease;
+    }
+    body.header-hidden main {
+      padding-top: 1rem;
+    }
+
+    .card {
+      background: var(--panel);
+      border: 1px solid rgba(255,255,255,.02);
+      border-radius: 1rem;
+      padding: .7rem .8rem .85rem;
+      display: flex;
+      flex-direction: column;
+      gap: .4rem;
+      min-height: 140px;
+    }
+    .source {
+      font-size: .6rem;
+      text-transform: uppercase;
+      letter-spacing: .09em;
+      color: var(--muted);
+    }
+    .title-link {
+      font-weight: 600;
+      font-size: .9rem;
+      line-height: 1.25;
+      color: inherit;
+      text-decoration: none;
+      word-break: break-word;
+    }
+    .title-link:hover { text-decoration: underline; }
+    .desc { font-size: .72rem; color: var(--muted); }
+    .date {
+      font-size: .6rem;
+      color: rgba(242,246,255,.35);
+      margin-top: auto;
+    }
+    .empty {
+      grid-column: 1 / -1;
+      text-align: center;
+      padding: 2rem 0;
+      color: var(--muted);
+    }
+
+    .card audio {
+      width: 100%;
+      max-width: 280px;
+      align-self: flex-start;
+      margin-top: .4rem;
+      border-radius: 999px;
+    }
+    audio { max-width: 100%; }
+
+    .fade-bottom {
+      pointer-events: none;
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 110px;
+      background: linear-gradient(to top, #000 0%, rgba(0,0,0,0) 100%);
+      z-index: 5;
+    }
+    .fade-right {
+      pointer-events: none;
+      position: fixed;
+      top: 0;
+      right: 0;
+      width: 46px;
+      height: 100%;
+      background: linear-gradient(to left, #000 0%, rgba(0,0,0,0) 100%);
+      z-index: 6;
+    }
+
+    .to-top {
+      position: fixed;
+      bottom: 1.1rem;
+      right: 1.1rem;
+      z-index: 10;
+      background: rgba(0,0,0,.4);
+      border: 1px solid rgba(255,255,255,.1);
+      border-radius: 999px;
+      padding: .4rem .8rem;
+      cursor: pointer;
+      font-size: .7rem;
+    }
+
+    #toggleHeader {
+      position: fixed;
+      top: .6rem;
+      right: .65rem;
+      z-index: 200;
+      background: rgba(0,0,0,0);
+      border: none;
+      cursor: pointer;
+      width: 30px;
+      height: 30px;
+      display: grid;
+      place-items: center;
+      color: rgba(242,246,255,.5);
+      transition: color .2s ease, background .2s ease;
+    }
+    #toggleHeader:hover {
+      color: rgba(242,246,255,.95);
+      background: rgba(0,0,0,.25);
+      border-radius: 999px;
+    }
+    .chevron {
+      width: 10px;
+      height: 10px;
+      border-right: 2px solid currentColor;
+      border-bottom: 2px solid currentColor;
+      transform: rotate(225deg);
+      transition: transform .2s ease;
+    }
+    body.header-hidden .chevron {
+      transform: rotate(45deg);
+    }
+
+    ::-webkit-scrollbar {
+      width: 12px;
+      height: 12px;
+      background-color: transparent;
+    }
+    ::-webkit-scrollbar-track { background: #000; }
+    ::-webkit-scrollbar-thumb {
+      background-color: rgba(255,255,255,0.05);
+      border-radius: 999px;
+      border: 2px solid #000;
+      box-shadow: inset 0 0 4px rgba(0,0,0,0.6);
+    }
+    ::-webkit-scrollbar-thumb:hover { background-color: rgba(255,255,255,0.1); }
+    * {
+      scrollbar-width: thin;
+      scrollbar-color: rgba(255,255,255,0.05) #000;
+    }
+
+    @media (max-width: 900px) {
+      main {
+        padding: calc(var(--header-h) + .5rem) .5rem 6rem;
+        gap: .75rem;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      }
+      body.header-hidden main { padding-top: .75rem; }
+      header { padding: .6rem .7rem .45rem; }
+    }
+    @media (max-width: 560px) {
+      main { grid-template-columns: 1fr; }
+      .tabs { gap: .35rem; }
+      .tab-btn { font-size: .62rem; padding: .28rem .55rem; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="title">OPULENT HARDWARE — MULTI FEED</div>
+    <div class="tabs" id="tabs">
+      <!-- pinned tabs (default) -->
+      <button class="tab-btn active" data-tab="news">BBC NEWS</button>
+      <button class="tab-btn" data-tab="market">YAHOO FINANCE</button>
+      <button class="tab-btn" data-tab="youtube">YOUTUBE</button>
+      <button class="tab-btn" data-tab="articles">ARTICLES</button>
+      <!-- overflow -->
+      <div class="tab-more" id="tabMore">
+        <button class="tab-more-btn" type="button">More ▾</button>
+        <div class="more-menu" id="moreMenu">
+          <button data-tab="podcasts">Podcasts</button>
+        </div>
+      </div>
+    </div>
+    <div class="searchbar">
+      <input id="filterInput" placeholder="Filter results by keyword…">
+    </div>
+  </header>
+
+  <button id="toggleHeader" type="button" aria-label="Toggle header">
+    <span class="chevron" aria-hidden="true"></span>
+  </button>
+
+  <main id="feed"></main>
+
+  <div class="fade-bottom"></div>
+  <div class="fade-right"></div>
+  <button class="to-top" onclick="window.scrollTo({top:0,behavior:'smooth'})">Top</button>
+
+  <script>
+    /* ===== FEED CONFIG ===== */
+    const NEWS_FEED = "https://feeds.bbci.co.uk/news/rss.xml";
+    const MARKET_FEEDS = [
+      { name: "AAPL", url: "https://feeds.finance.yahoo.com/rss/2.0/headline?s=AAPL&region=US&lang=en-US" },
+      { name: "NVDA", url: "https://feeds.finance.yahoo.com/rss/2.0/headline?s=NVDA&region=US&lang=en-US" },
+      { name: "TSLA", url: "https://feeds.finance.yahoo.com/rss/2.0/headline?s=TSLA&region=US&lang=en-US" }
+    ];
+
+    // YouTube creators (your list)
+    const YT_CHANNELS = [
+      { name: "itsLenabee",           channel_id: "UCeCOatE7PJIIce5-ekbtbbw" },
+      { name: "random callsign",      channel_id: "UC1hoWeqSuf03UgeABeR2U3g" },
+      { name: "GamerMuscleVideos",    channel_id: "UC69aRMKDNmaruRhBQ-_wyqw" },
+      { name: "yuyuyuly",             channel_id: "UCgjH88QC7TDfn_u9jcL8tBw" },
+      { name: "Bitwit",               channel_id: "UCftcLVz-jtPXoH3cWUUDwYw" },
+      { name: "SilencedTech",         channel_id: "UCqkjL0pwKQTz1oujPqM1qJQ" },
+      { name: "USSA: Woodworking+3D", channel_id: "UCUzWCK7K8Q--AyJnIyD6Fyw" },
+      { name: "The Simpit",           channel_id: "UCqnakdO0DZ7w3ne7-EmaW7w" },
+      { name: "Jimmy Broadbent",      channel_id: "UCq-ylUNa9RoTK5jr6TBOYag" },
+      { name: "Project Sim Racing",   channel_id: "UCA49ktWnaAdxGJHFSFirLbQ" },
+      { name: "FORMULA 1",            channel_id: "UCB_qr75-ydFVKSF9Dmo6izg" },
+      { name: "LRN2DIY",              channel_id: "UCPKAKrjoMz7POptCloy7AIQ" }
+    ];
+
+    // podcasts / audio-ish feeds
+    const PODCAST_FEEDS = [
+      { name: "NPR Planet Money",  url: "https://feeds.npr.org/510289/podcast.xml" },
+      { name: "NPR The Indicator", url: "https://feeds.npr.org/510325/podcast.xml" },
+      { name: "NPR Consider This", url: "https://feeds.npr.org/510355/podcast.xml" },
+      { name: "NPR Up First",      url: "https://feeds.npr.org/510318/podcast.xml" },
+      { name: "TED Talks Daily",   url: "https://feeds.feedburner.com/tedtalks_video" }
+    ];
+
+    // NEW: article/news-style feeds
+    const ARTICLE_FEEDS = [
+      { name: "Harvard Health Blog", url: "https://www.health.harvard.edu/blog/feed" },
+      { name: "Lonely Planet",       url: "https://www.lonelyplanet.com/blog.rss" },
+      { name: "Investopedia",        url: "https://www.investopedia.com/feedbuilder/feed/getfeed/?feedName=rss_articles" }
+    ];
+
+    /* ===== ELEMENTS ===== */
+    const feedEl = document.getElementById('feed');
+    const tabsEl = document.getElementById('tabs');
+    const filterInput = document.getElementById('filterInput');
+    const toggleHeaderBtn = document.getElementById('toggleHeader');
+    const tabMore = document.getElementById('tabMore');
+    const moreMenu = document.getElementById('moreMenu');
+
+    const proxyBuilders = [
+      (url) => url,
+      (url) => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
+      (url) => `https://cors.isomorphic-git.org/${url}`,
+      (url) => `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(url)}`
+    ];
+
+    function fetchWithTimeout(resource, options = {}) {
+      const { timeout = 4000 } = options;
+      return Promise.race([
+        fetch(resource, options),
+        new Promise((_, reject) => setTimeout(() => reject(new Error("timeout")), timeout))
+      ]);
+    }
+
+    async function smartFetch(url, opt = {}) {
+      for (const build of proxyBuilders) {
+        const target = build(url);
+        try {
+          const resp = await fetchWithTimeout(target, { timeout: 4000, ...opt });
+          if (!resp.ok) throw new Error("bad status");
+          if (target.includes("api.rss2json.com")) {
+            return { type: "json", data: await resp.json() };
+          }
+          return { type: "xml", data: await resp.text() };
+        } catch (e) { /* try next proxy */ }
+      }
+      throw new Error("all fetch methods failed for " + url);
+    }
+
+    /* ===== LOADERS ===== */
+
+    async function loadNews() {
+      feedEl.innerHTML = '<div class="empty">Loading BBC news…</div>';
+      try {
+        const { data } = await smartFetch(NEWS_FEED);
+        const xml = new DOMParser().parseFromString(data, "application/xml");
+        const items = [...xml.querySelectorAll('item')].map(item => ({
+          source: 'BBC News',
+          title: item.querySelector('title')?.textContent?.trim() || '',
+          desc: clean(item.querySelector('description')?.textContent || ''),
+          link: item.querySelector('link')?.textContent?.trim() || '#',
+          date: item.querySelector('pubDate')?.textContent?.trim() || ''
+        }));
+        renderList(items);
+      } catch (e) {
+        console.error(e);
+        feedEl.innerHTML = '<div class="empty">Could not load BBC.</div>';
+      }
+    }
+
+    async function loadMarket() {
+      feedEl.innerHTML = '<div class="empty">Loading market headlines…</div>';
+      const all = [];
+      for (const mf of MARKET_FEEDS) {
+        try {
+          const { data } = await smartFetch(mf.url);
+          const xml = new DOMParser().parseFromString(data, "application/xml");
+          const items = [...xml.querySelectorAll('item')].map(item => ({
+            source: `Yahoo Finance — ${mf.name}`,
+            title: item.querySelector('title')?.textContent?.trim() || '',
+            desc: clean(item.querySelector('description')?.textContent || ''),
+            link: item.querySelector('link')?.textContent?.trim() || '#',
+            date: item.querySelector('pubDate')?.textContent?.trim() || ''
+          }));
+          all.push(...items);
+        } catch (e) {
+          console.warn('market feed failed', mf.name, e);
+        }
+      }
+      all.sort((a,b)=>new Date(b.date)-new Date(a.date));
+      renderList(all);
+    }
+
+    async function loadYouTube() {
+      feedEl.innerHTML = '<div class="empty">Loading YouTube…</div>';
+      const feedDefs = YT_CHANNELS.map(c => ({
+        name: c.name,
+        url: `https://www.youtube.com/feeds/videos.xml?channel_id=${c.channel_id}`
+      }));
+
+      const results = await Promise.all(feedDefs.map(async (f) => {
+        try {
+          const { type, data } = await smartFetch(f.url);
+          if (type === "xml") {
+            const xml = new DOMParser().parseFromString(data, "application/xml");
+            return [...xml.querySelectorAll("entry")].map(entry => ({
+              source: f.name,
+              title: entry.querySelector("title")?.textContent?.trim() || "",
+              desc: entry.querySelector("media\\:description")?.textContent || "",
+              link: entry.querySelector("link")?.getAttribute("href") || "#",
+              date: entry.querySelector("published")?.textContent?.trim() ||
+                    entry.querySelector("updated")?.textContent?.trim() || ""
+            }));
+          }
+        } catch (e) {
+          console.warn("YouTube feed failed:", f.name, e);
+        }
+        return [];
+      }));
+
+      let videos = results.flat();
+      if (!videos.length) {
+        feedEl.innerHTML = '<div class="empty">No videos found.</div>';
+        return;
+      }
+
+      videos.sort((a, b) => new Date(b.date) - new Date(a.date));
+      videos = videos.slice(0, 24);
+
+      const q = filterInput.value.trim().toLowerCase();
+      if (q) {
+        videos = videos.filter(v =>
+          v.title.toLowerCase().includes(q) ||
+          v.source.toLowerCase().includes(q) ||
+          v.desc.toLowerCase().includes(q)
+        );
+      }
+
+      feedEl.innerHTML = "";
+      videos.forEach(v => {
+        const card = document.createElement("article");
+        card.className = "card";
+        card.innerHTML = `
+          <div class="source">${v.source}</div>
+          <a class="title-link" href="${v.link}" target="_blank" rel="noopener noreferrer">${v.title}</a>
+          <div class="desc">${clean(v.desc).slice(0, 180)}${v.desc.length > 180 ? "…" : ""}</div>
+          <div class="date">${v.date ? new Date(v.date).toLocaleString() : ""}</div>
+        `;
+        feedEl.appendChild(card);
+      });
+    }
+
+    async function loadArticles() {
+      feedEl.innerHTML = '<div class="empty">Loading articles…</div>';
+      const all = [];
+      for (const src of ARTICLE_FEEDS) {
+        try {
+          const { data } = await smartFetch(src.url);
+          const xml = new DOMParser().parseFromString(data, "application/xml");
+          const items = [...xml.querySelectorAll('item')].map(item => ({
+            source: src.name,
+            title: item.querySelector('title')?.textContent?.trim() || '',
+            desc: clean(item.querySelector('description')?.textContent || ''),
+            link: item.querySelector('link')?.textContent?.trim() || '#',
+            date: item.querySelector('pubDate')?.textContent?.trim() || ''
+          }));
+          all.push(...items);
+        } catch (e) {
+          console.warn('Article feed failed:', src.name, e);
+        }
+      }
+      if (!all.length) {
+        feedEl.innerHTML = '<div class="empty">No articles found.</div>';
+        return;
+      }
+      all.sort((a,b)=>new Date(b.date)-new Date(a.date));
+      renderList(all);
+    }
+
+    // podcast fetch helper
+    async function fetchPodcastFeed(feed, ms = 3500) {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), ms);
+      try {
+        const { type, data } = await smartFetch(feed.url, { signal: controller.signal });
+        let items = [];
+        if (type === "xml") {
+          const xml = new DOMParser().parseFromString(data, "application/xml");
+          items = [...xml.querySelectorAll("item")].map((item) => ({
+            source: feed.name,
+            title: item.querySelector("title")?.textContent?.trim() || "",
+            desc: clean(item.querySelector("description")?.textContent || ""),
+            link: item.querySelector("link")?.textContent?.trim() || "#",
+            date: item.querySelector("pubDate")?.textContent?.trim() || "",
+            audio: extractAudio(item),
+          }));
+        } else {
+          items = (data.items || []).map((ep) => ({
+            source: feed.name,
+            title: ep.title || "",
+            desc: clean(ep.description || ""),
+            link: ep.link || "#",
+            date: ep.pubDate || "",
+            audio: ep.enclosure?.link || ep.enclosure?.url || "",
+          }));
+        }
+        return items;
+      } catch (e) {
+        console.warn("podcast feed failed/slow:", feed.name, e);
+        return [];
+      } finally {
+        clearTimeout(timer);
+      }
+    }
+
+    async function loadPodcasts() {
+      feedEl.innerHTML = '<div class="empty">Loading feeds…</div>';
+
+      const results = await Promise.all(
+        PODCAST_FEEDS.map((f) => fetchPodcastFeed(f, 3500))
+      );
+      let episodes = results.flat().filter(Boolean);
+
+      if (!episodes.length) {
+        const pm = await fetchPodcastFeed(PODCAST_FEEDS[0], 4000);
+        episodes = pm;
+      }
+
+      if (!episodes.length) {
+        feedEl.innerHTML = '<div class="empty">No episodes found.</div>';
+        return;
+      }
+
+      episodes.sort((a, b) => new Date(b.date) - new Date(a.date));
+      episodes = episodes.slice(0, 12);
+
+      feedEl.innerHTML = "";
+      episodes.forEach((ep) => {
+        const card = document.createElement("article");
+        card.className = "card";
+        card.innerHTML = `
+          <div class="source">${ep.source}</div>
+          <a class="title-link" href="${ep.link}" target="_blank" rel="noopener noreferrer">${ep.title}</a>
+          <div class="desc">${ep.desc}</div>
+          <div class="date">${ep.date ? new Date(ep.date).toLocaleString() : ""}</div>
+        `;
+        if (ep.audio) {
+          const audio = document.createElement("audio");
+          audio.controls = true;
+          audio.src = ep.audio;
+          card.appendChild(audio);
+        }
+        feedEl.appendChild(card);
+      });
+    }
+
+    /* ===== UTIL ===== */
+    function extractAudio(item) {
+      const enclosure = item.querySelector('enclosure');
+      if (enclosure && enclosure.getAttribute('url')) return enclosure.getAttribute('url');
+      const media = item.getElementsByTagName('media:content')[0];
+      if (media && media.getAttribute('url')) return media.getAttribute('url');
+      return '';
+    }
+
+    function clean(str) {
+      return str.replace(/<!\[CDATA\[|\]\]>/g,'').replace(/<[^>]*>/g,'').trim();
+    }
+
+    function renderList(items) {
+      const q = filterInput.value.trim().toLowerCase();
+      const filtered = q
+        ? items.filter(it =>
+            it.title.toLowerCase().includes(q) ||
+            it.desc.toLowerCase().includes(q) ||
+            it.source.toLowerCase().includes(q)
+          )
+        : items;
+      if (!filtered.length) {
+        feedEl.innerHTML = '<div class="empty">No results.</div>';
+        return;
+      }
+      feedEl.innerHTML = '';
+      filtered.forEach(it => {
+        const card = document.createElement('article');
+        card.className = 'card';
+        card.innerHTML = `
+          <div class="source">${it.source}</div>
+          <a class="title-link" href="${it.link}" target="_blank" rel="noopener noreferrer">${it.title}</a>
+          <div class="desc">${it.desc}</div>
+          <div class="date">${it.date ? new Date(it.date).toLocaleString() : ''}</div>
+        `;
+        feedEl.appendChild(card);
+      });
+    }
+
+    /* ===== TAB HANDLING ===== */
+    function selectTab(tab) {
+      // mark active in pinned tabs
+      document.querySelectorAll('.tab-btn[data-tab]').forEach(b => {
+        if (b.dataset.tab === tab) b.classList.add('active');
+        else b.classList.remove('active');
+      });
+
+      // load content
+      if (tab === 'news') loadNews();
+      if (tab === 'market') loadMarket();
+      if (tab === 'youtube') loadYouTube();
+      if (tab === 'articles') loadArticles();
+      if (tab === 'podcasts') loadPodcasts();
+    }
+
+    tabsEl.addEventListener('click', (e) => {
+      const btn = e.target.closest('.tab-btn[data-tab]');
+      if (!btn) return;
+      const tab = btn.dataset.tab;
+      selectTab(tab);
+    });
+
+    // More menu
+    document.querySelector('#tabMore .tab-more-btn').addEventListener('click', () => {
+      tabMore.classList.toggle('open');
+    });
+    moreMenu.addEventListener('click', (e) => {
+      const btn = e.target.closest('button[data-tab]');
+      if (!btn) return;
+      const tab = btn.dataset.tab;
+      selectTab(tab);
+      tabMore.classList.remove('open');
+    });
+    document.addEventListener('click', (e) => {
+      if (!tabMore.contains(e.target)) {
+        tabMore.classList.remove('open');
+      }
+    });
+
+    // header toggle
+    toggleHeaderBtn.addEventListener('click', () => {
+      document.body.classList.toggle('header-hidden');
+    });
+
+    // initial load
+    loadNews();
+  </script>
+</body>
+</html>
